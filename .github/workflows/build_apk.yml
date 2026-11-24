@@ -1,4 +1,4 @@
-name: Build GRP2601 Android APK
+name: Build GRP2601 Release APK
 
 on:
   push:
@@ -22,11 +22,11 @@ jobs:
         with:
           gradle-version: '8.4'
 
-      - name: Build Debug APK
-        run: gradle assembleDebug
+      - name: Build Signed Release APK
+        run: gradle assembleRelease
 
-      - name: Upload APK
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: GRP2601-Manager-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: GRP2601-Native-Release-APK
+          path: app/build/outputs/apk/release/app-release.apk

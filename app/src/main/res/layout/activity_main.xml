@@ -7,40 +7,64 @@
     android:orientation="vertical"
     android:padding="14dp">
 
-    <!-- টপ বার -->
+    <!-- টপ হেডার -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingBottom="10dp">
+        android:paddingBottom="12dp">
 
         <ImageView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
             android:src="@drawable/ic_grp_logo" />
 
-        <TextView
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:text="GRP2601 Live Status"
-            android:textColor="#F8FAFC"
-            android:textSize="19sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GRP2601 Dashboard"
+                android:textColor="#F8FAFC"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvConnectionBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="● Connecting..."
+                android:textColor="#38BDF8"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnRefresh"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="6dp"
+            android:text="Refresh"
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btnToggleSettings"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:text="IP / Login"
+            android:text="Setup"
             android:textColor="#38BDF8"
+            android:textSize="12sp"
             app:strokeColor="#38BDF8" />
     </LinearLayout>
 
-    <!-- সেটিংস ও আইপি ডিটেকশন কার্ড -->
+    <!-- সেটিংস কার্ড -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardConfig"
         android:layout_width="match_parent"
@@ -69,7 +93,7 @@
                     android:layout_weight="1"
                     android:background="@android:drawable/edit_text"
                     android:backgroundTint="#0F172A"
-                    android:hint="IP (e.g. 192.168.31.48)"
+                    android:hint="IP (192.168.31.48)"
                     android:inputType="textUri"
                     android:paddingHorizontal="12dp"
                     android:textColor="#FFFFFF"
@@ -100,7 +124,7 @@
                     android:layout_weight="1"
                     android:background="@android:drawable/edit_text"
                     android:backgroundTint="#0F172A"
-                    android:hint="Username (admin)"
+                    android:hint="Username"
                     android:paddingHorizontal="12dp"
                     android:textColor="#FFFFFF"
                     android:textColorHint="#64748B"
@@ -128,35 +152,49 @@
                 android:layout_height="46dp"
                 android:layout_marginTop="10dp"
                 android:backgroundTint="#38BDF8"
-                android:text="Save &amp; Auto Login"
+                android:text="Save &amp; Fetch Data"
                 android:textColor="#0F172A"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvScanStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Status: Ready"
-                android:textColor="#38BDF8"
-                android:textSize="12sp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- ডাটা ডিসপ্লে WebView (কাস্টম থিম ও অটো-লগইন ইনজেকশনসহ) -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- নেটিভ ডাটা ড্যাশবোর্ড (ScrollView এর ভেতর সুন্দর কার্ড) -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        app:cardBackgroundColor="#1E293B"
-        app:cardCornerRadius="14dp"
-        app:strokeColor="#334155"
-        app:strokeWidth="1dp">
+        android:layout_weight="1">
 
-        <WebView
-            android:id="@+id/webView"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </com.google.android.material.card.MaterialCardView>
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/cardsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="20dp">
+
+                <!-- লোডিং মেসেজ -->
+                <TextView
+                    android:id="@+id/tvEmptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="30dp"
+                    android:text="ব্যাকগ্রাউন্ড থেকে ডাটা আনা হচ্ছে..."
+                    android:textColor="#94A3B8"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </ScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- অদৃশ্য ব্যাকগ্রাউন্ড WebView (শুধুমাত্র ডাটা ফেচ ও সেশন হ্যান্ডেল করার জন্য) -->
+    <WebView
+        android:id="@+id/hiddenWebView"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="invisible" />
 
 </LinearLayout>

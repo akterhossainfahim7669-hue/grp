@@ -10,14 +10,23 @@ android {
         applicationId "com.akter.grpmanager"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "2.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("keystore/release.jks")
+            storePassword "grp123456"
+            keyAlias "grp_key"
+            keyPassword "grp123456"
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
