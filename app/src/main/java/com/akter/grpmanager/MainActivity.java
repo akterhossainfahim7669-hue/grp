@@ -33,14 +33,15 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EditText etIp, etUser, etPass;
-    private TextView tvConnectionBadge, tvEmptyState;
-    private WebView hiddenWebView;
-    private MaterialCardView cardConfig;
-    private LinearLayout cardsContainer;
+    private EditText etIp;
+    private TextView tvConnectionBadge;
+    private WebView webView;
+    private MaterialCardView cardIpSetup, webLoginContainer;
     private SwipeRefreshLayout swipeRefresh;
+    private LinearLayout cardsContainer;
     private SharedPreferences prefs;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private boolean isExtracting = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,106 +51,112 @@ public class MainActivity extends AppCompatActivity {
         prefs = getSharedPreferences("GRP_PREFS", MODE_PRIVATE);
 
         etIp = findViewById(R.id.etIp);
-        etUser = findViewById(R.id.etUser);
-        etPass = findViewById(R.id.etPass);
         tvConnectionBadge = findViewById(R.id.tvConnectionBadge);
-        tvEmptyState = findViewById(R.id.tvEmptyState);
-        hiddenWebView = findViewById(R.id.hiddenWebView);
-        cardConfig = findViewById(R.id.cardConfig);
-        cardsContainer = findViewById(R.id.cardsContainer);
+        webView = findViewById(R.id.webView);
+        cardIpSetup = findViewById(R.id.cardIpSetup);
+        webLoginContainer = findViewById(R.id.webLoginContainer);
         swipeRefresh = findViewById(R.id.swipeRefresh);
+        cardsContainer = findViewById(R.id.cardsContainer);
 
+        Button btnToggleIp = findViewById(R.id.btnToggleIp);
         Button btnAutoScan = findViewById(R.id.btnAutoScan);
-        Button btnConnect = findViewById(R.id.btnConnect);
-        Button btnToggleSettings = findViewById(R.id.btnToggleSettings);
+        Button btnSaveIp = findViewById(R.id.btnSaveIp);
         Button btnRefresh = findViewById(R.id.btnRefresh);
 
         String savedIp = prefs.getString("ip", "192.168.31.48");
-        String savedUser = prefs.getString("user", "admin");
-        String savedPass = prefs.getString("pass", "");
-
         etIp.setText(savedIp);
-        etUser.setText(savedUser);
-        etPass.setText(savedPass);
 
-        setupBackgroundFetcher();
+        setupWebView();
+        loadUrl(savedIp);
 
-        if (!savedPass.isEmpty()) {
-            cardConfig.setVisibility(View.GONE);
-            startFetching(savedIp);
-        } else {
-            tvConnectionBadge.setText("● Setup Required");
-            tvEmptyState.setText("উপরের বক্সে পাসওয়ার্ড দিয়ে Save & Fetch Data চাপুন");
-        }
-
-        btnToggleSettings.setOnClickListener(v ->
-            cardConfig.setVisibility(cardConfig.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE)
+        btnToggleIp.setOnClickListener(v ->
+            cardIpSetup.setVisibility(cardIpSetup.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE)
         );
 
-        btnRefresh.setOnClickListener(v -> startFetching(prefs.getString("ip", savedIp)));
-        swipeRefresh.setOnRefreshListener(() -> startFetching(prefs.getString("ip", savedIp)));
         btnAutoScan.setOnClickListener(v -> scanNetworkForGRP());
 
-        btnConnect.setOnClickListener(v -> {
+        btnSaveIp.setOnClickListener(v -> {
             String ip = etIp.getText().toString().trim();
-            String user = etUser.getText().toString().trim();
-            String pass = etPass.getText().toString().trim();
-
-            if (ip.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "IP এবং Password দিন", Toast.LENGTH_SHORT).show();
-                return;
+            if (!ip.isEmpty()) {
+                prefs.edit().putString("ip", ip).apply();
+                cardIpSetup.setVisibility(View.GONE);
+                loadUrl(ip);
             }
-
-            prefs.edit().putString("ip", ip).putString("user", user).putString("pass", pass).apply();
-            cardConfig.setVisibility(View.GONE);
-            startFetching(ip);
         });
+
+        btnRefresh.setOnClickListener(v -> {
+            if (swipeRefresh.getVisibility() == View.VISIBLE) {
+                extractDataFromDom();
+            } else {
+                webView.reload();
+            }
+        });
+
+        swipeRefresh.setOnRefreshListener(this::extractDataFromDom);
     }
 
-    private void setupBackgroundFetcher() {
-        WebSettings settings = hiddenWebView.getSettings();
+    private void setupWebView() {
+        WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
-        CookieManager.getInstance().setAcceptCookie(true);
+        settings.setDatabaseEnabled(true);
+        settings.setSaveFormData(true);
 
-        hiddenWebView.setWebViewClient(new WebViewClient() {
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.setAcceptThirdPartyCookies(webView, true);
+
+        webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                String user = prefs.getString("user", "admin");
-                String pass = prefs.getString("pass", "");
-
-                // ১. যদি লগইন পেইজ হয় তবে অটো লগইন করবে
-                String loginJs = "(function() {" +
-                        "var u = document.querySelector('input[type=text]');" +
-                        "var p = document.querySelector('input[type=password]');" +
-                        "if(u && p) {" +
-                        "  u.value = '" + user + "';" +
-                        "  u.dispatchEvent(new Event('input', { bubbles: true }));" +
-                        "  p.value = '" + pass + "';" +
-                        "  p.dispatchEvent(new Event('input', { bubbles: true }));" +
-                        "  var btn = document.querySelector('button, input[type=submit]');" +
-                        "  if(btn) btn.click();" +
-                        "  return 'LOGGING_IN';" +
-                        "}" +
-                        "return 'LOGGED_IN';" +
-                        "})()";
-
-                view.evaluateJavascript(loginJs, state -> {
-                    if (state != null && state.contains("LOGGING_IN")) {
-                        tvConnectionBadge.setText("● Authenticating...");
-                    } else {
-                        tvConnectionBadge.setText("● Fetching Live Data...");
-                        // SPA পেইজ রেন্ডার হওয়ার জন্য ১.২ সেকেন্ড পর ডাটা এক্সট্র্যাক্ট
-                        handler.postDelayed(() -> extractDataFromDom(), 1200);
-                    }
-                });
+                CookieManager.getInstance().flush();
+                startPageWatcher();
             }
         });
     }
 
+    // SPA রাউটিং মনিটর: লগইন পেইজ নাকি স্ট্যাটাস পেইজ তা প্রতি ৮০০ms পরপর চেক করবে
+    private void startPageWatcher() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                String checkJs = "(function() {" +
+                        "var url = window.location.href;" +
+                        "var hasPass = document.querySelector('input[type=password]') !== null;" +
+                        "if(hasPass || url.includes('/login')) return 'LOGIN_PAGE';" +
+                        "return 'DASHBOARD_PAGE';" +
+                        "})()";
+
+                webView.evaluateJavascript(checkJs, state -> {
+                    if (state != null && state.contains("LOGIN_PAGE")) {
+                        // লগইন পেইজ সামনে দেখাবে
+                        if (webLoginContainer.getVisibility() != View.VISIBLE) {
+                            webLoginContainer.setVisibility(View.VISIBLE);
+                            swipeRefresh.setVisibility(View.GONE);
+                        }
+                        tvConnectionBadge.setText("● Login Required • " + prefs.getString("ip", ""));
+                        tvConnectionBadge.setTextColor(Color.parseColor("#FBBF24"));
+                        isExtracting = false;
+                        handler.postDelayed(this, 800);
+                    } else if (state != null && state.contains("DASHBOARD_PAGE")) {
+                        // লগইন হয়ে গেছে! এবার ওয়েবপেজ হাইড করে নেটিভ কার্ডে ডাটা দেখাবে
+                        if (webLoginContainer.getVisibility() == View.VISIBLE) {
+                            webLoginContainer.setVisibility(View.GONE);
+                            swipeRefresh.setVisibility(View.VISIBLE);
+                        }
+                        if (!isExtracting) {
+                            isExtracting = true;
+                            extractDataFromDom();
+                        }
+                    }
+                });
+            }
+        }, 600);
+    }
+
     private void extractDataFromDom() {
-        // ওয়েবপেজের সব টেবিল রো (tr) ও স্ট্যাটাস ডাটা JSON আকারে তুলে আনা
+        tvConnectionBadge.setText("● Fetching Data...");
         String extractJs = "(function() {" +
                 "var data = [];" +
                 "var rows = document.querySelectorAll('tr');" +
@@ -167,11 +174,13 @@ public class MainActivity extends AppCompatActivity {
                 "return JSON.stringify(data);" +
                 "})()";
 
-        hiddenWebView.evaluateJavascript(extractJs, jsonResult -> {
+        webView.evaluateJavascript(extractJs, jsonResult -> {
             swipeRefresh.setRefreshing(false);
             try {
-                if (jsonResult == null || jsonResult.equals("null")) return;
-                // WebView evaluateJavascript স্ট্রিং এস্কেপ পরিষ্কার করা
+                if (jsonResult == null || jsonResult.equals("null")) {
+                    handler.postDelayed(this::extractDataFromDom, 1000);
+                    return;
+                }
                 String cleanJson = jsonResult.substring(1, jsonResult.length() - 1)
                         .replace("\\\"", "\"")
                         .replace("\\\\", "\\");
@@ -179,14 +188,14 @@ public class MainActivity extends AppCompatActivity {
                 JSONArray arr = new JSONArray(cleanJson);
                 if (arr.length() > 0) {
                     renderNativeCards(arr);
-                    tvConnectionBadge.setText("● Online • " + prefs.getString("ip", ""));
+                    tvConnectionBadge.setText("● Connected • " + prefs.getString("ip", ""));
                     tvConnectionBadge.setTextColor(Color.parseColor("#4ADE80"));
+                    isExtracting = false;
                 } else {
-                    // প্রথমবার লোড হতে দেরি হলে আবার চেষ্টা করবে
-                    handler.postDelayed(this::extractDataFromDom, 1500);
+                    handler.postDelayed(this::extractDataFromDom, 1000);
                 }
             } catch (Exception e) {
-                tvConnectionBadge.setText("● Parse Retry...");
+                handler.postDelayed(this::extractDataFromDom, 1000);
             }
         });
     }
@@ -194,10 +203,10 @@ public class MainActivity extends AppCompatActivity {
     private void renderNativeCards(JSONArray items) {
         cardsContainer.removeAllViews();
 
-        // মেনু বাটন বার (Account / Network / System Info সুইচ করার জন্য)
+        // টপ কুইক মেনু বার (Account / Network / System Info / Logout)
         LinearLayout tabBar = new LinearLayout(this);
         tabBar.setOrientation(LinearLayout.HORIZONTAL);
-        tabBar.setPadding(0, 0, 0, 16);
+        tabBar.setPadding(0, 0, 0, 18);
 
         String[] tabs = {"Account Status", "Network Status", "System Info"};
         for (String tabName : tabs) {
@@ -206,15 +215,15 @@ public class MainActivity extends AppCompatActivity {
             b.setTextSize(12);
             b.setTextColor(Color.parseColor("#38BDF8"));
             b.setBackgroundColor(Color.parseColor("#1E293B"));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 110, 1f);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 105, 1f);
             lp.setMargins(6, 0, 6, 0);
             b.setLayoutParams(lp);
-            b.setOnClickListener(v -> clickWebMenu(tabName));
+            b.setOnClickListener(v -> switchPhoneTab(tabName));
             tabBar.addView(b);
         }
         cardsContainer.addView(tabBar);
 
-        // প্রতিটি ডাটা আইটেমের জন্য সুন্দর নেটিভ কার্ড তৈরি
+        // প্রতিটি ডাটা কার্ড আকারে সাজানো
         for (int i = 0; i < items.length(); i++) {
             try {
                 JSONObject obj = items.getJSONObject(i);
@@ -226,16 +235,16 @@ public class MainActivity extends AppCompatActivity {
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
                 );
-                cardParams.setMargins(0, 0, 0, 18);
+                cardParams.setMargins(0, 0, 0, 16);
                 card.setLayoutParams(cardParams);
                 card.setCardBackgroundColor(Color.parseColor("#1E293B"));
-                card.setRadius(28f);
+                card.setRadius(26f);
                 card.setStrokeColor(Color.parseColor("#334155"));
                 card.setStrokeWidth(2);
 
                 LinearLayout inner = new LinearLayout(this);
                 inner.setOrientation(LinearLayout.VERTICAL);
-                inner.setPadding(36, 28, 36, 28);
+                inner.setPadding(34, 24, 34, 24);
 
                 TextView tvKey = new TextView(this);
                 tvKey.setText(key);
@@ -244,11 +253,10 @@ public class MainActivity extends AppCompatActivity {
 
                 TextView tvVal = new TextView(this);
                 tvVal.setText(val);
-                tvVal.setTextSize(17f);
+                tvVal.setTextSize(16f);
                 tvVal.setTypeface(null, Typeface.BOLD);
                 tvVal.setPadding(0, 6, 0, 0);
 
-                // স্ট্যাটাস অনুযায়ী রঙ পরিবর্তন (Registered হলে সবুজ, Unregistered হলে লাল)
                 if (val.toLowerCase().contains("registered") && !val.toLowerCase().contains("unregistered")) {
                     tvVal.setTextColor(Color.parseColor("#4ADE80"));
                 } else if (val.toLowerCase().contains("unregistered") || val.toLowerCase().contains("down")) {
@@ -265,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void clickWebMenu(String menuText) {
+    private void switchPhoneTab(String menuText) {
         tvConnectionBadge.setText("● Loading " + menuText + "...");
         String clickJs = "(function() {" +
                 "var els = document.querySelectorAll('a, span, div, li');" +
@@ -275,14 +283,13 @@ public class MainActivity extends AppCompatActivity {
                 "  }" +
                 "}" +
                 "})()";
-        hiddenWebView.evaluateJavascript(clickJs, null);
+        webView.evaluateJavascript(clickJs, null);
         handler.postDelayed(this::extractDataFromDom, 900);
     }
 
-    private void startFetching(String ip) {
+    private void loadUrl(String ip) {
         String url = ip.startsWith("http") ? ip : "http://" + ip;
-        tvConnectionBadge.setText("● Connecting to " + ip + "...");
-        hiddenWebView.loadUrl(url);
+        webView.loadUrl(url);
     }
 
     private void scanNetworkForGRP() {
@@ -314,7 +321,9 @@ public class MainActivity extends AppCompatActivity {
                             if (line.contains("GRP2601") || line.contains("Grandstream")) {
                                 runOnUiThread(() -> {
                                     etIp.setText(testIp);
+                                    prefs.edit().putString("ip", testIp).apply();
                                     tvConnectionBadge.setText("● Found: " + testIp);
+                                    loadUrl(testIp);
                                 });
                                 break;
                             }

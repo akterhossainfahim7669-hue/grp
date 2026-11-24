@@ -13,11 +13,11 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingBottom="12dp">
+        android:paddingBottom="10dp">
 
         <ImageView
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:src="@drawable/ic_grp_logo" />
 
         <LinearLayout
@@ -30,7 +30,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="GRP2601 Dashboard"
+                android:text="GRP2601 Control"
                 android:textColor="#F8FAFC"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -39,7 +39,7 @@
                 android:id="@+id/tvConnectionBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="● Connecting..."
+                android:text="● Ready"
                 android:textColor="#38BDF8"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -54,147 +54,107 @@
             android:textSize="12sp" />
 
         <Button
-            android:id="@+id/btnToggleSettings"
+            android:id="@+id/btnToggleIp"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:text="Setup"
+            android:text="IP"
             android:textColor="#38BDF8"
             android:textSize="12sp"
             app:strokeColor="#38BDF8" />
     </LinearLayout>
 
-    <!-- সেটিংস কার্ড -->
+    <!-- IP সেটিংস ও অটো ডিটেক্ট বার -->
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardConfig"
+        android:id="@+id/cardIpSetup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="10dp"
+        android:visibility="gone"
         app:cardBackgroundColor="#1E293B"
-        app:cardCornerRadius="14dp"
+        app:cardCornerRadius="12dp"
         app:strokeColor="#334155"
         app:strokeWidth="1dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="14dp">
+            android:orientation="horizontal"
+            android:padding="10dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/etIp"
-                    android:layout_width="0dp"
-                    android:layout_height="46dp"
-                    android:layout_weight="1"
-                    android:background="@android:drawable/edit_text"
-                    android:backgroundTint="#0F172A"
-                    android:hint="IP (192.168.31.48)"
-                    android:inputType="textUri"
-                    android:paddingHorizontal="12dp"
-                    android:textColor="#FFFFFF"
-                    android:textColorHint="#64748B"
-                    android:textSize="14sp" />
-
-                <Button
-                    android:id="@+id/btnAutoScan"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
-                    android:layout_marginStart="8dp"
-                    android:backgroundTint="#0284C7"
-                    android:text="Auto Find"
-                    android:textColor="#FFFFFF" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/etUser"
-                    android:layout_width="0dp"
-                    android:layout_height="46dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1"
-                    android:background="@android:drawable/edit_text"
-                    android:backgroundTint="#0F172A"
-                    android:hint="Username"
-                    android:paddingHorizontal="12dp"
-                    android:textColor="#FFFFFF"
-                    android:textColorHint="#64748B"
-                    android:textSize="14sp" />
-
-                <EditText
-                    android:id="@+id/etPass"
-                    android:layout_width="0dp"
-                    android:layout_height="46dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_weight="1"
-                    android:background="@android:drawable/edit_text"
-                    android:backgroundTint="#0F172A"
-                    android:hint="Password"
-                    android:inputType="textPassword"
-                    android:paddingHorizontal="12dp"
-                    android:textColor="#FFFFFF"
-                    android:textColorHint="#64748B"
-                    android:textSize="14sp" />
-            </LinearLayout>
+            <EditText
+                android:id="@+id/etIp"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@android:drawable/edit_text"
+                android:backgroundTint="#0F172A"
+                android:hint="192.168.31.48"
+                android:inputType="textUri"
+                android:paddingHorizontal="10dp"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
 
             <Button
-                android:id="@+id/btnConnect"
-                android:layout_width="match_parent"
-                android:layout_height="46dp"
-                android:layout_marginTop="10dp"
+                android:id="@+id/btnAutoScan"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="#0284C7"
+                android:text="Auto"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/btnSaveIp"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
                 android:backgroundTint="#38BDF8"
-                android:text="Save &amp; Fetch Data"
+                android:text="Go"
                 android:textColor="#0F172A"
                 android:textStyle="bold" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- নেটিভ ডাটা ড্যাশবোর্ড (ScrollView এর ভেতর সুন্দর কার্ড) -->
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefresh"
+    <!-- মেইন কন্টেন্ট এরিয়া (লগইন ওয়েবপেজ এবং নেটিভ কার্ড ড্যাশবোর্ড) -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <ScrollView
+        <!-- ১. লগইন ওয়েবপেজ (শুধুমাত্র লগইন করার সময় সামনে আসবে) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/webLoginContainer"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="14dp">
 
-            <LinearLayout
-                android:id="@+id/cardsContainer"
+            <WebView
+                android:id="@+id/webView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingBottom="20dp">
+                android:layout_height="match_parent" />
+        </com.google.android.material.card.MaterialCardView>
 
-                <!-- লোডিং মেসেজ -->
-                <TextView
-                    android:id="@+id/tvEmptyState"
+        <!-- ২. লগইনের পর সুন্দর নেটিভ কার্ড ড্যাশবোর্ড -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:id="@+id/cardsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:padding="30dp"
-                    android:text="ব্যাকগ্রাউন্ড থেকে ডাটা আনা হচ্ছে..."
-                    android:textColor="#94A3B8"
-                    android:textSize="15sp" />
-            </LinearLayout>
-        </ScrollView>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+                    android:orientation="vertical"
+                    android:paddingBottom="20dp" />
+            </ScrollView>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- অদৃশ্য ব্যাকগ্রাউন্ড WebView (শুধুমাত্র ডাটা ফেচ ও সেশন হ্যান্ডেল করার জন্য) -->
-    <WebView
-        android:id="@+id/hiddenWebView"
-        android:layout_width="1dp"
-        android:layout_height="1dp"
-        android:visibility="invisible" />
-
+    </FrameLayout>
 </LinearLayout>
