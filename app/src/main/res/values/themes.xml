@@ -1,0 +1,14 @@
+<resources>
+    <style name="Theme.GRPManager" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#38BDF8</item>
+        <item name="colorOnPrimary">#0F172A</item>
+        <item name="colorSecondary">#0EA5E9</item>
+        <item name="android:windowBackground">#0B1120</item>
+        <item name="android:statusBarColor">#0B1120</item>
+    </style>
+
+    <style name="Theme.GRPManager.NoActionBar" parent="Theme.GRPManager">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+</resources>

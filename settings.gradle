@@ -1,0 +1,2 @@
+rootProject.name = "GRP2601Manager"
+include ':app'
